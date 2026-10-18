@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <AssemblyName>StatusLight</AssemblyName>
+    <!-- Release is what runs at logon (scripts/install-startup.ps1), so it gets no console window. -->
+    <OutputType Condition="'$(Configuration)' == 'Release'">WinExe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>

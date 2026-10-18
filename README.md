@@ -39,6 +39,20 @@ dotnet run --project src/StatusLight.Host
 
 To work without the hardware, set `"Device": "Console"` and frames are logged instead.
 
+### Starting at logon
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install-startup.ps1
+```
+
+This publishes a Release build (windowless) to `%LOCALAPPDATA%\StatusLight` and registers a `StatusLight` Scheduled
+Task that starts it at logon and restarts it if it crashes. The task's working directory is `src/StatusLight.Host`,
+so it reads the repo's `appsettings*.json` and config changes still reload live. Code changes need the script to be
+run again. Pass `-Uninstall` to remove it.
+
+To use `dotnet run` while the task is installed, run `Stop-ScheduledTask StatusLight` first, because both use port 5789.
+Restart the task afterwards with `Start-ScheduledTask StatusLight`.
+
 ## Local Claude Code sessions
 
 Merge [hooks/local/settings.json](hooks/local/settings.json) into `~/.claude/settings.json`. Each hook pipes its event
