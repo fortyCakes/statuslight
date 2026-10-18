@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/StatusLight.Core/StatusLight.Core.csproj" />
+    <Project Path="src/StatusLight.Devices.BlinkStick/StatusLight.Devices.BlinkStick.csproj" />
+    <Project Path="src/StatusLight.Host/StatusLight.Host.csproj" />
+    <Project Path="src/StatusLight.Sources.ClaudeCode/StatusLight.Sources.ClaudeCode.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/StatusLight.Core.Tests/StatusLight.Core.Tests.csproj" />
+  </Folder>
+</Solution>

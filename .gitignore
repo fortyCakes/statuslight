@@ -1,0 +1,8 @@
+bin/
+obj/
+.vs/
+*.user
+TestResults/
+
+# Machine-specific settings, e.g. the ntfy topic
+appsettings.Local.json

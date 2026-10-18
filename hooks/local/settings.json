@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "curl -s --max-time 1 -X POST -H \"Content-Type: application/json\" --data-binary @- http://127.0.0.1:5789/claude/hook" }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "curl -s --max-time 1 -X POST -H \"Content-Type: application/json\" --data-binary @- http://127.0.0.1:5789/claude/hook" }] }],
+    "PreToolUse": [{ "hooks": [{ "type": "command", "command": "curl -s --max-time 1 -X POST -H \"Content-Type: application/json\" --data-binary @- http://127.0.0.1:5789/claude/hook" }] }],
+    "PostToolUse": [{ "hooks": [{ "type": "command", "command": "curl -s --max-time 1 -X POST -H \"Content-Type: application/json\" --data-binary @- http://127.0.0.1:5789/claude/hook" }] }],
+    "Notification": [{ "hooks": [{ "type": "command", "command": "curl -s --max-time 1 -X POST -H \"Content-Type: application/json\" --data-binary @- http://127.0.0.1:5789/claude/hook" }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "curl -s --max-time 1 -X POST -H \"Content-Type: application/json\" --data-binary @- http://127.0.0.1:5789/claude/hook" }] }],
+    "SessionEnd": [{ "hooks": [{ "type": "command", "command": "curl -s --max-time 1 -X POST -H \"Content-Type: application/json\" --data-binary @- http://127.0.0.1:5789/claude/hook" }] }]
+  }
+}

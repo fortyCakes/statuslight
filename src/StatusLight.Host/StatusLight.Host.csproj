@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <AssemblyName>StatusLight</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StatusLight.Core\StatusLight.Core.csproj" />
+    <ProjectReference Include="..\StatusLight.Devices.BlinkStick\StatusLight.Devices.BlinkStick.csproj" />
+    <ProjectReference Include="..\StatusLight.Sources.ClaudeCode\StatusLight.Sources.ClaudeCode.csproj" />
+  </ItemGroup>
+
+</Project>
