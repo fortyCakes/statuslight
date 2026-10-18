@@ -1,0 +1,30 @@
+{
+  "name": "statuslight-vscode",
+  "displayName": "StatusLight",
+  "description": "Tells the StatusLight daemon which Claude Code tabs you're looking at, so it can show unread replies.",
+  "version": "0.1.2",
+  "publisher": "statuslight",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "extensionKind": [
+    "ui"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "StatusLight",
+      "properties": {
+        "statuslight.daemonUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:5789",
+          "description": "Base URL of the StatusLight daemon."
+        }
+      }
+    }
+  }
+}

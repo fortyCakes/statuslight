@@ -25,7 +25,8 @@ Default layout: LEDs 0–4 are Claude sessions, and LEDs 5–7 are reserved.
 | Idle           | `SessionStart`, or Done after 10 minutes         | dim white          |
 | Working        | `UserPromptSubmit`, `PreToolUse`, `PostToolUse`  | blue pulse         |
 | NeedsAttention | `Notification` (permission prompt, question)     | amber blink        |
-| Done           | `Stop`                                           | green              |
+| Unread         | `Stop` while the session's tab isn't in view     | bright green       |
+| Done           | `Stop` while in view, or Unread once you look    | dim green          |
 | (removed)      | `SessionEnd`                                     | off                |
 
 Colours, effects, zones, TTLs and brightness are all in `src/StatusLight.Host/appsettings.json` and reload live.
@@ -42,6 +43,29 @@ To work without the hardware, set `"Device": "Console"` and frames are logged in
 
 Merge [hooks/local/settings.json](hooks/local/settings.json) into `~/.claude/settings.json`. Each hook pipes its event
 JSON to `http://127.0.0.1:5789/claude/hook`, and fails silently and instantly if the daemon isn't running.
+
+### Unread vs Done (VS Code companion extension)
+
+The daemon can only tell whether you've seen a finished reply if it knows what's on screen. The extension in
+[vscode-extension/](vscode-extension/) reports the active Claude tab of each editor group (while the window is
+focused) to `POST /vscode/view`, on every change plus a 30s heartbeat. The daemon matches those tab labels against
+the session's title from its transcript (`custom-title`, else `ai-title`). VS Code truncates long labels to a prefix
+plus "…", so sessions whose titles share that prefix count as viewed together. A window's report goes stale after 90s.
+
+Without the extension, every `Stop` shows as Unread. Unlike Done, Unread doesn't fade to Idle.
+
+**Limitation:** this only works for Claude Code *editor tabs* ("Claude Code: Open in New Tab"). Other extensions
+can't see the Claude Code chat panel in the sidebar, so a session there always shows as Unread.
+
+To build and install it (vsce 3.2.1 is the last version that runs on Node 20.10):
+
+```powershell
+cd vscode-extension
+npx --yes @vscode/vsce@3.2.1 package --skip-license --allow-missing-repository -o statuslight-vscode.vsix
+code --install-extension statuslight-vscode.vsix --force
+```
+
+Then reload the VS Code window.
 
 ## Cloud Claude Code sessions
 
@@ -64,6 +88,8 @@ JSON to `http://127.0.0.1:5789/claude/hook`, and fails silently and instantly if
 | `PUT`    | `/signals/{source}/{key}`  | `{"state": "Working", "ttlSeconds": 300, "label": "…"}` |
 | `DELETE` | `/signals/{source}/{key}`  |                                                   |
 | `GET`    | `/device`                  |                                                   |
+| `POST`   | `/vscode/view`             | `{"windowId": "…", "titles": ["…"]}`               |
+| `GET`    | `/vscode/view`             | (diagnostics: each window's latest report)        |
 
 A source only shows up on the light if a zone in `Compositor:Zones` is assigned to it.
 

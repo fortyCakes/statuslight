@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Options;
 using StatusLight.Core;
 
@@ -15,14 +16,24 @@ public sealed class ClaudeOptions
 
     public TimeSpan AttentionTtl { get; set; } = TimeSpan.FromHours(4);
 
-    /// <summary>Applies to Idle and Done. SessionEnd removes the signal sooner; this catches sessions that crashed.</summary>
+    /// <summary>Applies to Idle, Unread and Done. SessionEnd removes the signal sooner; this catches sessions that crashed.</summary>
     public TimeSpan IdleTtl { get; set; } = TimeSpan.FromHours(8);
 }
 
-/// <summary>Turns Claude Code hook events into signals. Shared by the local hook endpoint and the cloud relay poller.</summary>
-public sealed class ClaudeHookMapper(SignalStore store, IOptionsMonitor<ClaudeOptions> options)
+/// <summary>
+/// Turns Claude Code hook events into signals. Shared by the local hook endpoint and the cloud relay poller.
+/// When a turn finishes it's <see cref="SignalState.Unread"/> unless you're looking at the session's tab, and it
+/// becomes <see cref="SignalState.Done"/> once you do (see <see cref="ViewedTabs"/>).
+/// </summary>
+public sealed class ClaudeHookMapper(
+    SignalStore store,
+    ViewedTabs viewedTabs,
+    TranscriptTitles titles,
+    IOptionsMonitor<ClaudeOptions> options)
 {
     public const string Source = "claude";
+
+    private readonly ConcurrentDictionary<string, string> _transcriptPaths = [];
 
     /// <returns><c>false</c> if the event doesn't affect the light.</returns>
     public bool Apply(ClaudeHookEvent e, DateTimeOffset at, bool fromCloud)
@@ -31,17 +42,21 @@ public sealed class ClaudeHookMapper(SignalStore store, IOptionsMonitor<ClaudeOp
 
         if (e.EventName == "SessionEnd")
         {
+            _transcriptPaths.TryRemove(key, out _);
             store.Remove(Source, key);
             return true;
         }
+
+        if (e.TranscriptPath is { Length: > 0 } path)
+            _transcriptPaths[key] = path;
 
         SignalState? state = e.EventName switch
         {
             "SessionStart" => SignalState.Idle,
             "UserPromptSubmit" or "PreToolUse" or "PostToolUse" => SignalState.Working,
-            // idle_prompt fires a minute after every finished turn; Done already covers that.
+            // idle_prompt fires a minute after every finished turn; Unread/Done already covers that.
             "Notification" when e.NotificationType is not ("idle_prompt" or "auth_success") => SignalState.NeedsAttention,
-            "Stop" => SignalState.Done,
+            "Stop" => IsViewed(key) ? SignalState.Done : SignalState.Unread,
             _ => null,
         };
 
@@ -60,4 +75,22 @@ public sealed class ClaudeHookMapper(SignalStore store, IOptionsMonitor<ClaudeOp
         store.Upsert(new StatusSignal(Source, key, s, at, at + ttl, label));
         return true;
     }
+
+    /// <summary>Marks Unread sessions whose tab is now in view as Done. Call whenever the viewed tabs change.</summary>
+    public void MarkViewedSessionsSeen(DateTimeOffset now)
+    {
+        foreach (var signal in store.GetActive())
+        {
+            if (signal.Source != Source || signal.State != SignalState.Unread || !IsViewed(signal.Key))
+                continue;
+
+            // Re-checked under the store's lock in case a new event arrived meanwhile. UpdatedAt moves to now so the
+            // Done style's fade timer starts from when you looked.
+            store.Update(Source, signal.Key, current =>
+                current.State == SignalState.Unread ? current with { State = SignalState.Done, UpdatedAt = now } : null);
+        }
+    }
+
+    private bool IsViewed(string key) =>
+        _transcriptPaths.TryGetValue(key, out var path) && titles.Read(path) is { } title && viewedTabs.IsViewed(title);
 }

@@ -4,8 +4,15 @@ namespace StatusLight.Core;
 public enum SignalState
 {
     Idle,
+
+    /// <summary>Finished, and you've seen it.</summary>
     Done,
+
     Working,
+
+    /// <summary>Finished, and you haven't looked yet.</summary>
+    Unread,
+
     Error,
     NeedsAttention,
 }

@@ -19,6 +19,19 @@ public sealed class SignalStore(TimeProvider time)
         }
     }
 
+    /// <summary>
+    /// Atomically replaces an existing signal with <paramref name="change"/>'s result, so a concurrent update can't be
+    /// overwritten by a decision made on stale data. Returning <c>null</c> leaves the signal as it is.
+    /// </summary>
+    public void Update(string source, string key, Func<StatusSignal, StatusSignal?> change)
+    {
+        lock (_lock)
+        {
+            if (_signals.TryGetValue((source, key), out var existing) && change(existing) is { } updated)
+                _signals[(source, key)] = updated;
+        }
+    }
+
     public bool Remove(string source, string key)
     {
         lock (_lock)

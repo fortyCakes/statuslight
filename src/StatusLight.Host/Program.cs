@@ -25,6 +25,8 @@ services.AddSingleton(TimeProvider.System);
 services.AddSingleton<SignalStore>();
 services.AddSingleton<IFrameCompositor, ZonedCompositor>();
 services.AddSingleton<ClaudeHookMapper>();
+services.AddSingleton<ViewedTabs>();
+services.AddSingleton<TranscriptTitles>();
 
 if (string.Equals(config["Device"], "Console", StringComparison.OrdinalIgnoreCase))
     services.AddSingleton<ILedDevice, ConsoleDevice>();
@@ -48,6 +50,20 @@ app.MapPost("/claude/hook", (ClaudeHookEvent e, ClaudeHookMapper mapper, TimePro
     return Results.NoContent();
 });
 
+// The companion VS Code extension reports which Claude tabs are in view, so finished sessions can go from Unread to Done.
+app.MapPost("/vscode/view", (ViewReport report, ViewedTabs viewedTabs, ClaudeHookMapper mapper, TimeProvider time) =>
+{
+    if (string.IsNullOrWhiteSpace(report.WindowId))
+        return Results.BadRequest();
+
+    viewedTabs.Update(report.WindowId, report.Titles ?? []);
+    mapper.MarkViewedSessionsSeen(time.GetUtcNow());
+    return Results.NoContent();
+});
+
+app.MapGet("/vscode/view", (ViewedTabs viewedTabs) =>
+    viewedTabs.Snapshot().Select(w => new { w.WindowId, w.Titles, w.At }));
+
 // Generic API for any other script or source.
 app.MapGet("/signals", (SignalStore store) => store.GetActive());
 
@@ -66,3 +82,5 @@ app.MapGet("/device", (ILedDevice device) => new { device.IsConnected, device.Le
 app.Run();
 
 internal sealed record SignalUpdate(SignalState State, int? TtlSeconds = null, string? Label = null);
+
+internal sealed record ViewReport(string WindowId, string[]? Titles);

@@ -11,7 +11,8 @@ public sealed record ClaudeHookEvent(
     [property: JsonPropertyName("session_id")] string SessionId,
     [property: JsonPropertyName("cwd")] string? Cwd = null,
     [property: JsonPropertyName("notification_type")] string? NotificationType = null,
-    [property: JsonPropertyName("repo")] string? Repo = null)
+    [property: JsonPropertyName("repo")] string? Repo = null,
+    [property: JsonPropertyName("transcript_path")] string? TranscriptPath = null)
 {
     public bool IsValid => !string.IsNullOrWhiteSpace(EventName) && !string.IsNullOrWhiteSpace(SessionId);
 }
