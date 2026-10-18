@@ -54,6 +54,14 @@ public sealed class ClaudeHookMapperTests : IDisposable
     }
 
     [Fact]
+    public void Cloud_stop_is_done()
+    {
+        Apply("Stop", fromCloud: true);
+
+        Assert.Equal(SignalState.Done, State);
+    }
+
+    [Fact]
     public void Unread_becomes_done_when_the_tab_comes_into_view()
     {
         Apply("Stop");

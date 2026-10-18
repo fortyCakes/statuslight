@@ -25,8 +25,8 @@ Default layout: LEDs 0–4 are Claude sessions, and LEDs 5–7 are reserved.
 | Idle           | `SessionStart`, or Done after 10 minutes         | dim white          |
 | Working        | `UserPromptSubmit`, `PreToolUse`, `PostToolUse`  | blue pulse         |
 | NeedsAttention | `Notification` (permission prompt, question)     | amber blink        |
-| Unread         | `Stop` while the session's tab isn't in view     | solid amber        |
-| Done           | `Stop` while in view, or Unread once you look    | dim green          |
+| Unread         | local `Stop` while the session's tab isn't in view | solid amber      |
+| Done           | `Stop` while in view or from the cloud, or Unread once you look | dim green |
 | (removed)      | `SessionEnd`                                     | off                |
 
 Colours, effects, zones, TTLs and brightness are all in `src/StatusLight.Host/appsettings.json` and reload live.
@@ -92,6 +92,10 @@ Then reload the VS Code window.
 3. In the cloud environment's settings, set `STATUSLIGHT_NTFY_TOPIC` to the same topic and allow network access to
    `ntfy.sh`. The script does nothing when the variable is unset, so local sessions in the same repo don't
    double-report.
+
+Nothing reports when you view a cloud session (or archive it; the container is usually asleep by then), so a
+finished cloud turn goes straight to Done rather than Unread. Questions and permission prompts still show as
+NeedsAttention. Updates arrive up to one poll interval (15s) late.
 
 ## HTTP API
 

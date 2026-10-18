@@ -22,8 +22,8 @@ public sealed class ClaudeOptions
 
 /// <summary>
 /// Turns Claude Code hook events into signals. Shared by the local hook endpoint and the cloud relay poller.
-/// When a turn finishes it's <see cref="SignalState.Unread"/> unless you're looking at the session's tab, and it
-/// becomes <see cref="SignalState.Done"/> once you do (see <see cref="ViewedTabs"/>).
+/// When a local turn finishes it's <see cref="SignalState.Unread"/> unless you're looking at the session's tab, and it
+/// becomes <see cref="SignalState.Done"/> once you do (see <see cref="ViewedTabs"/>). Cloud turns go straight to Done.
 /// </summary>
 public sealed class ClaudeHookMapper(
     SignalStore store,
@@ -56,7 +56,9 @@ public sealed class ClaudeHookMapper(
             "UserPromptSubmit" or "PreToolUse" or "PostToolUse" => SignalState.Working,
             // idle_prompt fires a minute after every finished turn; Unread/Done already covers that.
             "Notification" when e.NotificationType is not ("idle_prompt" or "auth_success") => SignalState.NeedsAttention,
-            "Stop" => IsViewed(key) ? SignalState.Done : SignalState.Unread,
+            // Nothing reports when a cloud session is viewed (it may only ever be opened on a phone), so cloud turns
+            // count as read straight away.
+            "Stop" => fromCloud || IsViewed(key) ? SignalState.Done : SignalState.Unread,
             _ => null,
         };
 
