@@ -23,9 +23,9 @@ Default layout: LEDs 0–4 are Claude sessions, and LEDs 5–7 are reserved.
 | State          | Claude event                                     | Default look       |
 |----------------|--------------------------------------------------|--------------------|
 | Idle           | `SessionStart`, or Done after 10 minutes         | dim white          |
-| Working        | `UserPromptSubmit`, `PreToolUse`, `PostToolUse`  | blue pulse         |
+| Working        | `UserPromptSubmit`, `PreToolUse`, `PostToolUse`  | subtle blue pulse  |
 | NeedsAttention | `Notification` (permission prompt, question)     | amber blink        |
-| Unread         | local `Stop` while the session's tab isn't in view | solid amber      |
+| Unread         | local `Stop` while the session's tab isn't in view | slow amber pulse |
 | Done           | `Stop` while in view or from the cloud, or Unread once you look | dim green |
 | (removed)      | `SessionEnd`                                     | off                |
 

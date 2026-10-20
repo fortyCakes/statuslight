@@ -37,13 +37,16 @@ public sealed class StateStyle
     public EffectKind Effect { get; set; } = EffectKind.Solid;
     public int PeriodMs { get; set; } = 1000;
 
+    /// <summary>Lowest brightness of a <see cref="EffectKind.Pulse"/>, 0–1. Closer to 1 is subtler.</summary>
+    public double MinLevel { get; set; } = 0.15;
+
     public LedEffect ToEffect()
     {
         var color = Rgb.Parse(Color);
         var period = TimeSpan.FromMilliseconds(Math.Max(PeriodMs, 1));
         return Effect switch
         {
-            EffectKind.Pulse => new PulseEffect(color, period),
+            EffectKind.Pulse => new PulseEffect(color, period, Math.Clamp(MinLevel, 0, 1)),
             EffectKind.Blink => new BlinkEffect(color, period),
             _ => new SolidEffect(color),
         };
