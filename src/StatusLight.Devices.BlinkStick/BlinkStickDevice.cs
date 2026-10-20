@@ -16,7 +16,8 @@ public sealed class BlinkStickOptions
 
 /// <summary>
 /// BlinkStick Square driver. The device may come and go at any time (it sits on a USB switcher shared between two
-/// computers), so writes are dropped while it is absent and the full frame is re-sent whenever it reappears.
+/// computers), so writes are dropped while it is absent, reconnection is retried every couple of seconds, and the full
+/// frame is re-sent whenever it reappears.
 /// </summary>
 public sealed class BlinkStickDevice : ILedDevice, IDisposable
 {
@@ -28,12 +29,17 @@ public sealed class BlinkStickDevice : ILedDevice, IDisposable
     private const byte FrameReportId = 6;
     private const byte Channel = 0;
 
+    // Device-list events alone aren't enough: one can fire before the device is ready to open, and a failed write
+    // drops the handle with no event to follow. So while disconnected, writes also retry on this interval.
+    private const long RetryIntervalMs = 2000;
+
     private readonly Lock _lock = new();
     private readonly ILogger<BlinkStickDevice> _logger;
     private readonly string? _serial;
     private readonly byte[] _report = new byte[2 + Leds * 3];
     private byte[]? _lastSent;
     private HidStream? _stream;
+    private long _lastAttemptMs;
 
     public BlinkStickDevice(IOptions<BlinkStickOptions> options, ILogger<BlinkStickDevice> logger)
     {
@@ -60,6 +66,9 @@ public sealed class BlinkStickDevice : ILedDevice, IDisposable
     {
         lock (_lock)
         {
+            if (_stream is null && Environment.TickCount64 - _lastAttemptMs >= RetryIntervalMs)
+                Reconnect();
+
             if (_stream is null)
                 return;
 
@@ -107,6 +116,7 @@ public sealed class BlinkStickDevice : ILedDevice, IDisposable
     private void Reconnect()
     {
         var wasConnected = _stream is not null;
+        _lastAttemptMs = Environment.TickCount64;
         CloseStream();
 
         var device = DeviceList.Local
